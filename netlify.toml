@@ -1,0 +1,2 @@
+[build]
+  image = "ubuntu-noble-24.04"
