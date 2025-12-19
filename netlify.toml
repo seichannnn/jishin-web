@@ -1,2 +1,7 @@
 [build]
   image = "ubuntu-noble-24.04"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
