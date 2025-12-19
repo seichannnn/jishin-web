@@ -195,7 +195,7 @@
         .intensity-7 { background-color: #9c005b; animation: popIn 0.5s forwards, pulse-red 2s infinite 1s; }
         .intensity-unknown { background-color: #666; }
 
-        /* 左上情報パネル */
+        /* 左上情報パネル (PCデフォルト) */
         .info-panel {
             position: absolute;
             top: 20px; left: 20px; z-index: 1000;
@@ -249,7 +249,7 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* 凡例 */
+        /* 凡例 (PCデフォルト) */
         .legend {
             position: absolute; bottom: 30px; right: 20px; z-index: 1000;
             padding: 12px; width: 140px;
@@ -273,7 +273,7 @@
         }
         .refresh-btn:hover { background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.4)); }
 
-        /* ヘッダーボタン */
+        /* ヘッダーボタン (PCデフォルト) */
         .header-buttons { position: absolute; top: 20px; right: 20px; z-index: 1100; display: flex; gap: 10px; }
 
         /* 履歴パネル */
@@ -334,13 +334,66 @@
             text-align: right; font-weight: bold; color: var(--text-secondary); font-family: var(--font-mono); letter-spacing: 1px; font-size: 0.9em;
         }
 
-        /* レスポンシブ */
+        /* --- スマホ向けレスポンシブデザイン (強化版) --- */
         @media (max-width: 600px) {
-            .info-panel { width: calc(100% - 40px); max-width: none; top: auto; bottom: 20px; left: 20px; max-height: 40vh; }
-            .header-buttons { top: 15px; right: 15px; }
-            .ui-btn { padding: 8px 12px; font-size: 11px; }
-            .history-panel { width: 100%; right: -100%; border-radius: 0; }
-            .legend { top: 20px; left: 20px; bottom: auto; right: auto; }
+            /* 情報パネル: 下部に固定、幅広、文字サイズアップ */
+            .info-panel {
+                width: calc(100% - 20px);
+                max-width: none;
+                top: auto;
+                bottom: 10px;
+                left: 10px;
+                max-height: 40vh; /* 少し高さを確保 */
+                padding: 15px;
+                background: rgba(20, 25, 35, 0.95); /* 視認性向上のため背景を濃く */
+                border-radius: 16px;
+            }
+            .info-panel h1 { font-size: 18px; }
+            .info-label { font-size: 13px; }
+            .info-value { font-size: 16px; }
+            .max-intensity { font-size: 1.8em; }
+
+            /* ヘッダーボタン: 押しやすく、少し大きく */
+            .header-buttons {
+                top: 10px;
+                right: 10px;
+                gap: 8px;
+            }
+            .ui-btn {
+                padding: 10px 16px;
+                font-size: 13px;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+                background: rgba(20, 25, 35, 0.9);
+            }
+
+            /* 履歴パネル: 全画面オーバーレイっぽく */
+            .history-panel {
+                width: 100%;
+                right: -100%;
+                border-radius: 0;
+            }
+
+            /* 凡例: 左上に小さく表示して地図を邪魔しないように */
+            .legend {
+                top: 10px;
+                left: 10px;
+                bottom: auto;
+                right: auto;
+                width: auto;
+                padding: 8px;
+                transform: scale(0.85); /* 縮小 */
+                transform-origin: top left;
+                background: rgba(20, 25, 35, 0.85);
+                border-radius: 8px;
+            }
+            .legend-title { font-size: 10px; margin-bottom: 4px; }
+            .legend-item { width: 24px; height: 24px; font-size: 10px; }
+            
+            /* モーダル: 幅を確保 */
+            .modal-content {
+                width: 90%;
+                padding: 20px;
+            }
         }
     </style>
 </head>
