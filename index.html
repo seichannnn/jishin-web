@@ -336,32 +336,39 @@
 
         /* --- スマホ向けレスポンシブデザイン (強化版) --- */
         @media (max-width: 600px) {
-            /* 情報パネル: 下部に固定、幅広、文字サイズアップ */
+            /* 情報パネル: 画面下部に小さく表示し、はみ出しを防止 */
             .info-panel {
-                width: calc(100% - 20px);
+                width: calc(100% - 20px); /* 左右に10pxの余白 */
+                left: 10px;
+                right: auto;
                 max-width: none;
                 top: auto;
-                bottom: 10px;
-                left: 10px;
-                max-height: 40vh; /* 少し高さを確保 */
-                padding: 15px;
-                background: rgba(20, 25, 35, 0.95); /* 視認性向上のため背景を濃く */
-                border-radius: 16px;
+                bottom: 20px; /* 下部マージン */
+                max-height: 40vh; /* 画面高の40%までに制限 */
+                padding: 10px; /* パディングを縮小 */
+                background: rgba(20, 25, 35, 0.95);
+                border-radius: 12px;
+                box-sizing: border-box;
             }
-            .info-panel h1 { font-size: 18px; }
-            .info-label { font-size: 13px; }
-            .info-value { font-size: 16px; }
-            .max-intensity { font-size: 1.8em; }
+            /* 文字サイズを全体的に小さく */
+            .info-panel h1 { font-size: 14px; margin-bottom: 5px; padding-bottom: 5px; }
+            .info-label { font-size: 10px; }
+            .info-value { font-size: 12px; }
+            .max-intensity { font-size: 1.3em; }
+            .info-row { padding: 3px 0; }
+            
+            /* 更新ボタンも小さく */
+            .refresh-btn { margin-top: 10px; padding: 8px; font-size: 11px; }
 
-            /* ヘッダーボタン: 押しやすく、少し大きく */
+            /* ヘッダーボタン */
             .header-buttons {
-                top: 10px;
-                right: 10px;
+                top: 15px;
+                right: 15px;
                 gap: 8px;
             }
             .ui-btn {
-                padding: 10px 16px;
-                font-size: 13px;
+                padding: 8px 12px;
+                font-size: 11px;
                 box-shadow: 0 4px 6px rgba(0,0,0,0.3);
                 background: rgba(20, 25, 35, 0.9);
             }
@@ -371,29 +378,34 @@
                 width: 100%;
                 right: -100%;
                 border-radius: 0;
+                background: rgba(18, 18, 18, 0.98);
             }
+            .history-header { padding: 15px; }
 
-            /* 凡例: 左上に小さく表示して地図を邪魔しないように */
+            /* 凡例: 左上に小さく表示 */
             .legend {
-                top: 10px;
-                left: 10px;
+                top: 15px;
+                left: 15px;
                 bottom: auto;
                 right: auto;
                 width: auto;
-                padding: 8px;
-                transform: scale(0.85); /* 縮小 */
+                padding: 6px;
+                transform: scale(0.8);
                 transform-origin: top left;
                 background: rgba(20, 25, 35, 0.85);
-                border-radius: 8px;
+                border-radius: 6px;
             }
-            .legend-title { font-size: 10px; margin-bottom: 4px; }
-            .legend-item { width: 24px; height: 24px; font-size: 10px; }
+            .legend-grid { gap: 2px; }
+            .legend-item { width: 20px; height: 20px; font-size: 9px; }
             
-            /* モーダル: 幅を確保 */
+            /* モーダル */
             .modal-content {
-                width: 90%;
+                width: 85%;
                 padding: 20px;
+                max-height: 80vh;
+                overflow-y: auto;
             }
+            .modal-content h2 { font-size: 1.2em; }
         }
     </style>
 </head>
@@ -520,11 +532,15 @@
 
         function getCoordinates(addrString, prefString) {
             if (!addrString) return null; 
+            // 1. 完全一致 (都道府県+市町村)
             if (prefString && locationMap[prefString + addrString]) return { lat: locationMap[prefString + addrString][0], lng: locationMap[prefString + addrString][1], isFallback: false };
+            // 2. 市町村名のみ
             if (locationMap[addrString]) return { lat: locationMap[addrString][0], lng: locationMap[addrString][1], isFallback: false };
+            // 3. 部分一致
             for (const key in locationMap) {
                 if (addrString.startsWith(key)) return { lat: locationMap[key][0], lng: locationMap[key][1], isFallback: false };
             }
+            // 4. フォールバック (県庁)
             if (prefString && locationMap[prefString]) return { lat: locationMap[prefString][0], lng: locationMap[prefString][1], isFallback: true };
             return null;
         }
