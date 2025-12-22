@@ -4,59 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>最新地震・津波情報マップ</title>
-    
-    <!-- SNS設定 -->
     <meta property="og:title" content="最新地震・津波情報マップ">
     <meta property="og:description" content="国内の最新地震・津波情報を可視化。">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Earthquake Map">
-    
-    <!-- ファビコン -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌊</text></svg>">
-    
-    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
-    
-    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
-
     <style>
-        :root {
-            --bg-dark: #121212;
-            --panel-bg: rgba(20, 25, 35, 0.85);
-            --panel-border: rgba(255, 255, 255, 0.15);
-            --text-primary: #ffffff;
-            --text-secondary: #b0b0b0;
-            --accent-color: #3b82f6;
-            --danger-color: #ef4444;
-            --font-main: 'Noto Sans JP', sans-serif;
-            --font-mono: 'Roboto Mono', monospace;
-            --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
-        }
-
-        body, html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            width: 100%;
-            font-family: var(--font-main);
-            background-color: var(--bg-dark);
-            color: var(--text-primary);
-            overflow: hidden;
-        }
-
-        #map {
-            height: 100%;
-            width: 100%;
-            z-index: 1;
-            background: #1a1a1a;
-        }
-
-        .leaflet-tile-pane {
-            filter: grayscale(20%) brightness(95%);
-        }
-
-        /* --- Animations --- */
+        :root { --bg-dark: #121212; --panel-bg: rgba(20, 25, 35, 0.85); --panel-border: rgba(255, 255, 255, 0.15); --text-primary: #ffffff; --text-secondary: #b0b0b0; --accent-color: #3b82f6; --danger-color: #ef4444; --font-main: 'Noto Sans JP', sans-serif; --font-mono: 'Roboto Mono', monospace; --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5); }
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; font-family: var(--font-main); background-color: var(--bg-dark); color: var(--text-primary); overflow: hidden; }
+        #map { height: 100%; width: 100%; z-index: 1; background: #1a1a1a; }
+        .leaflet-tile-pane { filter: grayscale(20%) brightness(95%); }
         @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 60% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
         @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(230, 0, 0, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(230, 0, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(230, 0, 0, 0); } }
         @keyframes pulse-yellow { 0% { box-shadow: 0 0 0 0 rgba(255, 200, 0, 0.7); } 70% { box-shadow: 0 0 0 8px rgba(255, 200, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 200, 0, 0); } }
@@ -64,56 +25,25 @@
         @keyframes slideInLeft { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
         @keyframes slideInRightItem { from { transform: translateX(30px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes flashText { 0% { color: var(--text-primary); text-shadow: none; } 30% { color: #fff; text-shadow: 0 0 8px #fff, 0 0 12px var(--accent-color); } 100% { color: var(--text-primary); text-shadow: none; } }
-        @keyframes modalPopUp { 0% { opacity: 0; transform: scale(0.9) translateY(20px); filter: blur(10px); } 100% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); } }
         @keyframes overlayFadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        /* --- Components --- */
-        .glass-panel {
-            background: var(--panel-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--panel-border); box-shadow: var(--shadow-lg); border-radius: 12px; color: var(--text-primary);
-        }
-
-        .ui-btn {
-            background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: var(--text-primary);
-            padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 700; transition: all 0.2s ease;
-            backdrop-filter: blur(4px);
-        }
-        .ui-btn:hover { background: rgba(255, 255, 255, 0.2); transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
-        .ui-btn:active { transform: translateY(0); }
-
-        /* Icons */
+        @keyframes modalPopUp { 0% { opacity: 0; transform: scale(0.8) translateY(30px); filter: blur(10px); } 100% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); } }
+        .glass-panel { background: var(--panel-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--panel-border); box-shadow: var(--shadow-lg); border-radius: 12px; color: var(--text-primary); }
+        .ui-btn { background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: var(--text-primary); padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 700; transition: all 0.2s ease; backdrop-filter: blur(4px); }
+        .ui-btn:hover { background: rgba(255, 255, 255, 0.2); transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.3); } .ui-btn:active { transform: translateY(0); }
         .epicenter-marker { position: relative; display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; }
         .epicenter-center { font-size: 28px; color: #ff3333; font-weight: bold; text-shadow: 0 0 10px rgba(255, 0, 0, 0.8); z-index: 2; line-height: 1; }
-        .epicenter-ripple {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 50%;
-            border: 2px solid #ff3333; box-shadow: 0 0 10px #ff3333; animation: ripple 2s infinite ease-out; pointer-events: none;
-        }
+        .epicenter-ripple { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 50%; border: 2px solid #ff3333; box-shadow: 0 0 10px #ff3333; animation: ripple 2s infinite ease-out; pointer-events: none; }
         .epicenter-ripple:nth-child(2) { animation-delay: 0.6s; }
-
-        .seismic-icon {
-            display: flex; align-items: center; justify-content: center; border-radius: 50%;
-            font-family: var(--font-mono); font-weight: 700; font-size: 14px; color: #fff;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.4); border: 2px solid rgba(255, 255, 255, 0.9);
-            opacity: 0; transform: scale(0); animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-        }
+        .seismic-icon { display: flex; align-items: center; justify-content: center; border-radius: 50%; font-family: var(--font-mono); font-weight: 700; font-size: 14px; color: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.4); border: 2px solid rgba(255, 255, 255, 0.9); opacity: 0; transform: scale(0); animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         .seismic-icon:hover { transform: scale(1.3) !important; z-index: 1000 !important; cursor: pointer; }
-
-        .intensity-1 { background-color: #6085c9; }
-        .intensity-2 { background-color: #2679d6; }
-        .intensity-3 { background-color: #2bba2b; }
-        .intensity-4 { background-color: #f0cc00; color: #222; text-shadow: none; }
+        .intensity-1 { background-color: #6085c9; } .intensity-2 { background-color: #2679d6; } .intensity-3 { background-color: #2bba2b; } .intensity-4 { background-color: #f0cc00; color: #222; text-shadow: none; }
         .intensity-5-minus { background-color: #ffaa00; color: #222; text-shadow: none; animation: popIn 0.5s forwards, pulse-yellow 2s infinite 1s; }
         .intensity-5-plus { background-color: #ff7300; animation: popIn 0.5s forwards, pulse-yellow 2s infinite 1s; }
         .intensity-6-minus { background-color: #e60000; animation: popIn 0.5s forwards, pulse-red 2s infinite 1s; }
         .intensity-6-plus { background-color: #a60021; animation: popIn 0.5s forwards, pulse-red 2s infinite 1s; }
         .intensity-7 { background-color: #9c005b; animation: popIn 0.5s forwards, pulse-red 2s infinite 1s; }
         .intensity-unknown { background-color: #666; }
-
-        /* Panels */
-        .info-panel {
-            position: absolute; top: 20px; left: 20px; z-index: 1000; padding: 20px; width: 320px; max-width: 90%; max-height: 85vh;
-            overflow-y: auto; border-left: 6px solid var(--text-secondary); transition: border-color 0.3s ease; animation: slideInLeft 0.5s ease-out;
-        }
+        .info-panel { position: absolute; top: 20px; left: 20px; z-index: 1000; padding: 20px; width: 320px; max-width: 90%; max-height: 85vh; overflow-y: auto; border-left: 6px solid var(--text-secondary); transition: border-color 0.3s ease; animation: slideInLeft 0.5s ease-out; }
         .info-panel h1 { margin: 0 0 10px 0; font-size: 20px; font-weight: 700; letter-spacing: 0.05em; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--panel-border); padding-bottom: 10px; }
         .source-credit { font-size: 10px; color: var(--text-secondary); margin-bottom: 15px; line-height: 1.4; }
         .info-row { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 0; border-bottom: 1px dashed rgba(255,255,255,0.1); }
@@ -122,8 +52,6 @@
         .info-value { font-weight: 700; text-align: right; font-size: 15px; }
         .info-value.updated { animation: flashText 0.6s ease-out; }
         .max-intensity { font-size: 1.6em; font-family: var(--font-mono); letter-spacing: -0.05em; }
-
-        /* 津波情報 */
         .tsunami-area-list { margin-top: 15px; border-top: 1px solid var(--panel-border); padding-top: 10px; }
         .tsunami-row { padding: 6px 0; border-bottom: 1px dashed rgba(255,255,255,0.1); font-size: 13px; display: flex; align-items: center; }
         .tsunami-grade { display: inline-block; padding: 2px 8px; border-radius: 4px; color: white; font-weight: bold; font-size: 10px; margin-right: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
@@ -131,43 +59,23 @@
         .grade-warning { background: linear-gradient(135deg, #f44336, #c62828); }
         .grade-watch { background: linear-gradient(135deg, #ffeb3b, #fbc02d); color: #222; }
         .grade-unknown { background: #666; }
-
-        /* ロード画面 */
-        #loading {
-            position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(18, 18, 18, 0.9); z-index: 2000;
-            display: flex; justify-content: center; align-items: center; font-weight: bold; color: var(--text-primary); flex-direction: column; backdrop-filter: blur(5px);
-        }
+        #loading { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(18, 18, 18, 0.9); z-index: 2000; display: flex; justify-content: center; align-items: center; font-weight: bold; color: var(--text-primary); flex-direction: column; backdrop-filter: blur(5px); }
         .loading-spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.1); border-top-color: var(--accent-color); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
         @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* 凡例 */
         .legend { position: absolute; bottom: 30px; right: 20px; z-index: 1000; padding: 12px; width: 140px; }
         .legend-title { font-weight: bold; margin-bottom: 8px; text-align: center; font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
         .legend-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
         .legend-item { display: flex; align-items: center; justify-content: center; height: 30px; border-radius: 6px; font-weight: bold; font-size: 12px; font-family: var(--font-mono); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-
-        /* 更新ボタン */
         .refresh-btn { margin-top: 15px; width: 100%; background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.3)); border-color: rgba(59, 130, 246, 0.4); }
         .refresh-btn:hover { background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.4)); }
-
-        /* ヘッダーボタン */
         .header-buttons { position: absolute; top: 20px; right: 20px; z-index: 1100; display: flex; gap: 10px; }
-
-        /* 履歴パネル */
-        .history-panel {
-            position: absolute; top: 0; right: -340px; width: 320px; height: 100%; z-index: 1200;
-            transition: right 0.4s cubic-bezier(0.19, 1, 0.22, 1); display: flex; flex-direction: column;
-            border-radius: 12px 0 0 12px; border-right: none;
-        }
+        .history-panel { position: absolute; top: 0; right: -340px; width: 320px; height: 100%; z-index: 1200; transition: right 0.4s cubic-bezier(0.19, 1, 0.22, 1); display: flex; flex-direction: column; border-radius: 12px 0 0 12px; border-right: none; }
         .history-panel.open { right: 0; box-shadow: -10px 0 30px rgba(0,0,0,0.5); }
         .history-header { padding: 20px; border-bottom: 1px solid var(--panel-border); font-weight: bold; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); }
         .close-history-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary); transition: color 0.2s; }
         .close-history-btn:hover { color: var(--text-primary); }
         .history-list { flex: 1; overflow-y: auto; padding: 10px; }
-        .history-item {
-            padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; border-radius: 8px; transition: background 0.2s; margin-bottom: 8px;
-            background: rgba(255,255,255,0.02); opacity: 0; transform: translateX(30px); animation: slideInRightItem 0.4s ease-out forwards;
-        }
+        .history-item { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; border-radius: 8px; transition: background 0.2s; margin-bottom: 8px; background: rgba(255,255,255,0.02); opacity: 0; transform: translateX(30px); animation: slideInRightItem 0.4s ease-out forwards; }
         .history-item:hover { background: rgba(255,255,255,0.08); }
         .history-item.active { background: linear-gradient(90deg, rgba(59, 130, 246, 0.15), transparent); border-left: 3px solid var(--accent-color); }
         .history-time { font-size: 11px; color: var(--text-secondary); font-family: var(--font-mono); }
@@ -175,19 +83,9 @@
         .history-meta { font-size: 11px; display: flex; justify-content: space-between; align-items: center; margin-top: 6px; }
         .history-shindo-badge { padding: 3px 8px; border-radius: 4px; color: white; font-weight: bold; font-size: 10px; font-family: var(--font-mono); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
         .tsunami-badge { background-color: #1e3a8a; border: 1px solid #3b82f6; }
-
-        /* About Modal */
-        .modal-overlay {
-            display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); z-index: 2000;
-            justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease;
-        }
+        .modal-overlay { display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); z-index: 2000; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease; }
         .modal-overlay.open { opacity: 1; visibility: visible; }
-        .modal-content {
-            padding: 30px; max-width: 500px; width: 90%; position: relative;
-            opacity: 0; transform: scale(0.9) translateY(20px); filter: blur(10px);
-            transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.4s ease;
-        }
+        .modal-content { padding: 30px; max-width: 500px; width: 90%; position: relative; opacity: 0; transform: scale(0.9) translateY(20px); filter: blur(10px); transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.4s ease; }
         .modal-overlay.open .modal-content { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
         .close-modal-btn { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: var(--text-secondary); transition: color 0.2s; }
         .close-modal-btn:hover { color: var(--text-primary); }
@@ -196,32 +94,21 @@
         .modal-content ul { background: rgba(255,255,255,0.03); padding: 15px 15px 15px 35px; border-radius: 8px; color: #d1d5db; }
         .creator-credit { margin-top: 25px; padding-top: 15px; border-top: 1px dashed var(--panel-border); text-align: right; font-weight: bold; color: var(--text-secondary); font-family: var(--font-mono); letter-spacing: 1px; font-size: 0.9em; }
 
-        /* Mobile */
         @media (max-width: 600px) {
-            .info-panel {
-                width: calc(100% - 20px); left: 10px; right: auto; top: auto; bottom: 20px;
-                max-height: 40vh; padding: 12px; background: rgba(20, 25, 35, 0.98); border-radius: 16px; box-sizing: border-box;
-            }
+            .info-panel { width: calc(100% - 20px); left: 10px; right: auto; top: auto; bottom: 20px; max-height: 40vh; padding: 12px; background: rgba(20, 25, 35, 0.98); border-radius: 16px; box-sizing: border-box; }
             .info-panel h1 { font-size: 16px; margin-bottom: 8px; padding-bottom: 8px; }
             .info-label { font-size: 11px; }
             .info-value { font-size: 14px; }
             .max-intensity { font-size: 1.5em; }
             .info-row { padding: 4px 0; }
             .refresh-btn { margin-top: 10px; padding: 10px; font-size: 12px; }
-
             .header-buttons { top: 15px; right: 15px; gap: 8px; }
             .ui-btn { padding: 10px 14px; font-size: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); background: rgba(20, 25, 35, 0.95); }
-
             .history-panel { width: 100%; right: -100%; border-radius: 0; background: rgba(18, 18, 18, 0.98); }
             .history-header { padding: 15px; }
-
-            .legend {
-                top: 15px; left: 15px; bottom: auto; right: auto; width: auto; padding: 6px;
-                transform: scale(0.85); transform-origin: top left; background: rgba(20, 25, 35, 0.9); border-radius: 8px;
-            }
+            .legend { top: 15px; left: 15px; bottom: auto; right: auto; width: auto; padding: 6px; transform: scale(0.85); transform-origin: top left; background: rgba(20, 25, 35, 0.9); border-radius: 8px; }
             .legend-grid { gap: 3px; }
             .legend-item { width: 22px; height: 22px; font-size: 10px; }
-            
             .modal-content { width: 85%; padding: 20px; max-height: 80vh; overflow-y: auto; }
             .modal-content h2 { font-size: 1.3em; }
         }
@@ -230,44 +117,27 @@
 <body>
     <div id="loading"><div class="loading-spinner"></div><div>Loading Data...</div></div>
     <div id="map"></div>
-
-    <div class="header-buttons">
-        <button class="ui-btn" onclick="toggleAbout()">ABOUT</button>
-        <button class="ui-btn" onclick="toggleHistory()">履歴</button>
-    </div>
-
+    <div class="header-buttons"><button class="ui-btn" onclick="toggleAbout()">ABOUT</button><button class="ui-btn" onclick="toggleHistory()">履歴</button></div>
     <div id="aboutModal" class="modal-overlay" onclick="toggleAbout()">
         <div class="modal-content glass-panel" onclick="event.stopPropagation()">
             <span class="close-modal-btn" onclick="toggleAbout()">×</span>
             <h2>About This Map</h2>
             <p>気象庁のデータを元にした最新の地震・津波情報を、地図上でリアルタイムに確認できるWebアプリです。</p>
-            <p><strong>機能・特徴：</strong></p>
-            <ul>
-                <li>最新の地震情報（震度分布）の可視化</li>
-                <li>津波予報の表示</li>
-                <li>過去の地震履歴の閲覧</li>
-                <li>SF風ダークグラスモーフィズムデザイン</li>
-            </ul>
-            <p style="font-size:0.85em; color:var(--text-secondary);">
-                ※ データ出典：気象庁、防災科学技術研究所 (via P2PQuake API)<br>
-                ※ 実際の避難行動は公式情報に従ってください。
-            </p>
+            <p><strong>機能・特徴：</strong></p><ul><li>最新の地震情報（震度分布）の可視化</li><li>津波予報の表示</li><li>過去の地震履歴の閲覧</li><li>SF風ダークグラスモーフィズムデザイン</li></ul>
+            <p style="font-size:0.85em; color:var(--text-secondary);">※ データ出典：気象庁、防災科学技術研究所 (via P2PQuake API)<br>※ 実際の避難行動は公式情報に従ってください。</p>
             <div class="creator-credit">Created by seichan</div>
         </div>
     </div>
-
     <div class="history-panel glass-panel" id="historyPanel">
         <div class="history-header">履歴一覧 <button class="close-history-btn" onclick="toggleHistory()">×</button></div>
         <div class="history-list" id="historyList"></div>
     </div>
-
     <div class="info-panel glass-panel" id="infoPanel">
         <h1>EARTHQUAKE</h1>
         <div class="source-credit">DATA: JMA, NIED via P2PQuake API</div>
         <div class="info-details" id="infoContent"><div style="padding: 20px; text-align: center; color: var(--text-secondary);">Waiting for data...</div></div>
         <button class="ui-btn refresh-btn" onclick="fetchLatestQuake()">最新情報に更新</button>
     </div>
-
     <div class="legend glass-panel">
         <div class="legend-title">JMA SEISMIC SCALE</div>
         <div class="legend-grid">
@@ -276,7 +146,6 @@
             <div class="legend-item intensity-6-minus">6-</div><div class="legend-item intensity-6-plus">6+</div><div class="legend-item intensity-7">7</div>
         </div>
     </div>
-
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <script>
         const map = L.map('map', { zoomControl: false }).setView([36.5, 138.0], 5);
@@ -305,7 +174,7 @@
             "初山別村": [44.55, 141.76], "遠別町": [44.72, 141.80], "天塩町": [44.88, 141.74], "猿払村": [45.33, 142.11], "浜頓別町": [45.12, 142.36],
             "中頓別町": [44.97, 142.29], "枝幸町": [44.94, 142.58], "豊富町": [45.10, 141.77], "幌延町": [45.01, 141.84], "紋別市": [44.35, 143.35],
             "津別町": [43.70, 144.03], "訓子府町": [43.72, 143.74], "置戸町": [43.69, 143.59], "佐呂間町": [44.02, 143.77], "滝上町": [44.19, 143.07],
-            "興部町": [44.47, 143.12], "西興部村": [44.33, 142.93], "雄武町": [44.58, 142.96], "大空町": [43.91, 144.16], "大衡村": [38.53, 140.91], "宮城県大衡村": [38.53, 140.91],
+            "興部町": [44.47, 143.12], "西興部村": [44.33, 142.93], "雄武町": [44.58, 142.96],
             "青森市": [40.82, 140.74], "弘前市": [40.60, 140.46], "八戸市": [40.51, 141.48], "黒石市": [40.64, 140.59], "五所川原市": [40.80, 140.44], "十和田市": [40.61, 141.21], "三沢市": [40.68, 141.36], "むつ市": [41.29, 141.18], "つがる市": [40.80, 140.40], "平川市": [40.57, 140.56], "平内町": [40.93, 140.96], "外ヶ浜町": [41.04, 140.63], "鰺ヶ沢町": [40.77, 140.22], "深浦町": [40.65, 139.93], "野辺地町": [40.87, 141.12], "七戸町": [40.70, 141.15], "六戸町": [40.62, 141.22], "横浜町": [41.02, 141.24], "東北町": [40.73, 141.26], "六ヶ所村": [40.97, 141.37], "おいらせ町": [40.60, 141.41], "大間町": [41.53, 140.91], "東通村": [41.25, 141.33], "三戸町": [40.38, 141.26], "五戸町": [40.52, 141.30], "田子町": [40.34, 141.15], "南部町": [40.46, 141.37], "階上町": [40.46, 141.62],
             "盛岡市": [39.70, 141.15], "宮古市": [39.64, 141.95], "大船渡市": [39.08, 141.70], "花巻市": [39.39, 141.11], "北上市": [39.28, 141.11], "久慈市": [40.19, 141.77], "遠野市": [39.32, 141.53], "一関市": [38.93, 141.13], "陸前高田市": [39.01, 141.63], "釜石市": [39.27, 141.88], "二戸市": [40.27, 141.30], "八幡平市": [39.99, 141.08], "奥州市": [39.14, 141.14], "滝沢市": [39.73, 141.07], "雫石町": [39.70, 140.97], "葛巻町": [40.03, 141.44], "岩手町": [39.97, 141.28], "紫波町": [39.55, 141.16], "矢巾町": [39.61, 141.14], "西和賀町": [39.31, 140.78], "金ケ崎町": [39.19, 141.11], "平泉町": [39.00, 141.11], "住田町": [39.14, 141.57], "大槌町": [39.36, 141.90], "山田町": [39.47, 141.95], "岩泉町": [39.84, 141.79], "田野畑村": [39.93, 141.89], "普代村": [40.00, 141.88], "野田村": [40.11, 141.82], "九戸村": [40.16, 141.43], "洋野町": [40.29, 141.72], "一戸町": [40.21, 141.30],
             "仙台市": [38.26, 140.87], "石巻市": [38.43, 141.30], "塩竈市": [38.31, 141.02], "気仙沼市": [38.90, 141.57], "白石市": [38.00, 140.62], "名取市": [38.17, 140.89], "角田市": [37.97, 140.78], "多賀城市": [38.29, 141.00], "岩沼市": [38.10, 140.87], "登米市": [38.69, 141.18], "栗原市": [38.73, 141.01], "東松島市": [38.42, 141.21], "大崎市": [38.57, 140.95], "富谷市": [38.39, 140.89], "蔵王町": [38.07, 140.65], "七ヶ宿町": [38.00, 140.44], "大河原町": [38.05, 140.73], "村田町": [38.12, 140.72], "柴田町": [38.06, 140.77], "川崎町": [38.18, 140.64], "丸森町": [37.91, 140.77], "亘理町": [38.04, 140.86], "山元町": [37.96, 140.87], "松島町": [38.37, 141.07], "七ヶ浜町": [38.30, 141.05], "利府町": [38.33, 140.97], "大和町": [38.44, 140.88], "大郷町": [38.38, 141.00], "大衡村": [38.49, 140.87], "色麻町": [38.54, 140.82], "加美町": [38.57, 140.77], "涌谷町": [38.54, 141.13], "美里町": [38.54, 141.06], "女川町": [38.45, 141.44], "南三陸町": [38.67, 141.44],
@@ -351,8 +220,7 @@
             "大分市": [33.23, 131.60], "別府市": [33.28, 131.49], "中津市": [33.59, 131.19], "日田市": [33.32, 130.94], "佐伯市": [32.96, 131.89], "臼杵市": [33.12, 131.80], "津久見市": [33.07, 131.86], "竹田市": [32.96, 131.39], "豊后高田市": [33.56, 131.44], "杵築市": [33.41, 131.61], "宇佐市": [33.53, 131.35], "豊后大野市": [32.97, 131.58], "由布市": [33.17, 131.42], "国東市": [33.56, 131.73],
             "宮崎市": [31.90, 131.42], "都城市": [31.71, 131.06], "延岡市": [32.58, 131.67], "日南市": [31.60, 131.37], "小林市": [31.99, 130.97], "日向市": [32.42, 131.62], "串間市": [31.46, 131.23], "西都市": [32.11, 131.40], "えびの市": [32.04, 130.82],
             "鹿児島市": [31.59, 130.55], "鹿屋市": [31.37, 130.85], "枕崎市": [31.27, 130.29], "阿久根市": [32.02, 130.19], "出水市": [32.08, 130.35], "指宿市": [31.23, 130.63], "西之表市": [30.73, 130.99], "垂水市": [31.49, 130.70], "薩摩川内市": [31.81, 130.30], "日置市": [31.63, 130.39], "曽於市": [31.66, 130.98], "霧島市": [31.74, 130.76], "いちき串木野市": [31.71, 130.27], "南さつま市": [31.41, 130.32], "志布志市": [31.47, 131.09], "奄美市": [28.37, 129.49], "南九州市": [31.37, 130.43], "伊佐市": [32.05, 130.61], "姶良市": [31.73, 130.62], "屋久島町": [30.34, 130.52], "与論町": [27.04, 128.43], "和泊町": [27.37, 128.66], "知名町": [27.36, 128.60], "徳之島町": [27.73, 129.00], "天城町": [27.73, 128.93], "伊仙町": [27.68, 128.93], "龍郷町": [28.42, 129.60], "喜界町": [28.32, 129.93], "竹富町": [24.33, 123.82], "与那国町": [24.45, 122.98], "久米島町": [26.34, 126.75],
-            "那覇市": [26.21, 127.68], "宜野湾市": [26.28, 127.76], "石垣市": [24.34, 124.15], "浦添市": [26.24, 127.72], "名護市": [26.59, 127.97], "糸満市": [26.12, 127.67], "沖縄市": [26.33, 127.80], "豊見城市": [26.17, 127.68], "うるま市": [26.37, 127.85], "宮古島市": [24.80, 125.28], "南城市": [26.15, 127.77],
-            "大衡村": [38.53, 140.91], "宮城県大衡村": [38.53, 140.91]
+            "那覇市": [26.21, 127.68], "宜野湾市": [26.28, 127.76], "石垣市": [24.34, 124.15], "浦添市": [26.24, 127.72], "名護市": [26.59, 127.97], "糸満市": [26.12, 127.67], "沖縄市": [26.33, 127.80], "豊見城市": [26.17, 127.68], "うるま市": [26.37, 127.85], "宮古島市": [24.80, 125.28], "南城市": [26.15, 127.77]
         };
 
         function getCoordinates(addrString, prefString) {
@@ -549,8 +417,9 @@
                         lat += (Math.random() - 0.5) * jitter; lng += (Math.random() - 0.5) * jitter;
                         const pInfo = parseIntensity(point.scale);
                         const delay = Math.min(delayIndex * 0.02, 1.5); delayIndex++;
+                        const zIndex = point.scale ? point.scale * 100 : 0;
                         const icon = L.divIcon({ className: 'custom-div-icon', html: `<div class="seismic-icon ${pInfo.className}" style="animation-delay:${delay}s">${pInfo.label}</div>`, iconSize: [24, 24], iconAnchor: [12, 12] });
-                        L.marker([lat, lng], { icon: icon }).addTo(markerLayer).bindPopup(`<strong>${point.pref}${point.addr}</strong><br>震度${pInfo.label}`);
+                        L.marker([lat, lng], { icon: icon, zIndexOffset: zIndex }).addTo(markerLayer).bindPopup(`<strong>${point.pref}${point.addr}</strong><br>震度${pInfo.label}`);
                     }
                 });
             }
