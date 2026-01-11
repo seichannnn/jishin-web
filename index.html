@@ -4,20 +4,60 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>最新地震・津波情報マップ</title>
+    
+    <!-- SNS設定 -->
     <meta property="og:title" content="最新地震・津波情報マップ">
     <meta property="og:description" content="国内の最新地震・津波情報を可視化。">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Earthquake Map">
+    
+    <!-- ファビコン -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌊</text></svg>">
+
+    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+
     <style>
-        :root { --bg-dark: #121212; --panel-bg: rgba(20, 25, 35, 0.85); --panel-border: rgba(255, 255, 255, 0.15); --text-primary: #ffffff; --text-secondary: #b0b0b0; --accent-color: #3b82f6; --danger-color: #ef4444; --font-main: 'Noto Sans JP', sans-serif; --font-mono: 'Roboto Mono', monospace; --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5); }
-        body, html { margin: 0; padding: 0; height: 100%; width: 100%; font-family: var(--font-main); background-color: var(--bg-dark); color: var(--text-primary); overflow: hidden; }
-        #map { height: 100%; width: 100%; z-index: 1; background: #1a1a1a; }
-        .leaflet-tile-pane { filter: grayscale(20%) brightness(95%); }
+        :root {
+            --bg-dark: #121212;
+            --panel-bg: rgba(20, 25, 35, 0.85);
+            --panel-border: rgba(255, 255, 255, 0.15);
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --accent-color: #3b82f6;
+            --danger-color: #ef4444;
+            --font-main: 'Noto Sans JP', sans-serif;
+            --font-mono: 'Roboto Mono', monospace;
+            --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            font-family: var(--font-main);
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            overflow: hidden;
+        }
+
+        #map {
+            height: 100%;
+            width: 100%;
+            z-index: 1;
+            background: #1a1a1a;
+        }
+
+        /* 地図タイルのトーン調整 */
+        .leaflet-tile-pane {
+            filter: grayscale(20%) brightness(90%) contrast(110%);
+        }
+
+        /* --- アニメーション --- */
         @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 60% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
         @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(230, 0, 0, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(230, 0, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(230, 0, 0, 0); } }
         @keyframes pulse-yellow { 0% { box-shadow: 0 0 0 0 rgba(255, 200, 0, 0.7); } 70% { box-shadow: 0 0 0 8px rgba(255, 200, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 200, 0, 0); } }
@@ -27,23 +67,101 @@
         @keyframes flashText { 0% { color: var(--text-primary); text-shadow: none; } 30% { color: #fff; text-shadow: 0 0 8px #fff, 0 0 12px var(--accent-color); } 100% { color: var(--text-primary); text-shadow: none; } }
         @keyframes overlayFadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes modalPopUp { 0% { opacity: 0; transform: scale(0.8) translateY(30px); filter: blur(10px); } 100% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); } }
-        .glass-panel { background: var(--panel-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--panel-border); box-shadow: var(--shadow-lg); border-radius: 12px; color: var(--text-primary); }
-        .ui-btn { background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: var(--text-primary); padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 700; transition: all 0.2s ease; backdrop-filter: blur(4px); }
-        .ui-btn:hover { background: rgba(255, 255, 255, 0.2); transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.3); } .ui-btn:active { transform: translateY(0); }
+
+        /* --- 共通コンポーネント --- */
+        .glass-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--panel-border);
+            box-shadow: var(--shadow-lg);
+            border-radius: 12px;
+            color: var(--text-primary);
+        }
+
+        .ui-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-primary);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 700;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(4px);
+        }
+        .ui-btn:hover { background: rgba(255, 255, 255, 0.2); transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
+        .ui-btn:active { transform: translateY(0); }
+
+        /* Leaflet コントロール（右上） */
+        .leaflet-top.leaflet-right {
+            top: 10px;
+            right: 10px;
+        }
+        .leaflet-control-layers {
+            background: var(--panel-bg) !important;
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--panel-border) !important;
+            color: #fff !important;
+            border-radius: 8px !important;
+            box-shadow: var(--shadow-lg) !important;
+            font-family: var(--font-main);
+            font-size: 12px;
+        }
+        .leaflet-control-layers-separator { border-top: 1px solid rgba(255, 255, 255, 0.15) !important; }
+        .leaflet-bar a { background-color: rgba(20, 25, 35, 0.9) !important; color: #fff !important; border-bottom: 1px solid rgba(255,255,255,0.2) !important; }
+        .leaflet-bar a:hover { background-color: rgba(59, 130, 246, 0.8) !important; }
+
+        /* 震源地アイコン */
         .epicenter-marker { position: relative; display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; }
         .epicenter-center { font-size: 28px; color: #ff3333; font-weight: bold; text-shadow: 0 0 10px rgba(255, 0, 0, 0.8); z-index: 2; line-height: 1; }
-        .epicenter-ripple { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 50%; border: 2px solid #ff3333; box-shadow: 0 0 10px #ff3333; animation: ripple 2s infinite ease-out; pointer-events: none; }
+        .epicenter-ripple {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); border-radius: 50%;
+            border: 2px solid #ff3333; box-shadow: 0 0 10px #ff3333; animation: ripple 2s infinite ease-out; pointer-events: none;
+        }
         .epicenter-ripple:nth-child(2) { animation-delay: 0.6s; }
-        .seismic-icon { display: flex; align-items: center; justify-content: center; border-radius: 50%; font-family: var(--font-mono); font-weight: 700; font-size: 14px; color: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.4); border: 2px solid rgba(255, 255, 255, 0.9); opacity: 0; transform: scale(0); animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
+        /* 震度アイコン */
+        .seismic-icon {
+            display: flex; align-items: center; justify-content: center; border-radius: 50%;
+            font-family: var(--font-mono); font-weight: 700; font-size: 14px; color: #fff;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.4); border: 2px solid rgba(255, 255, 255, 0.9);
+            opacity: 0; transform: scale(0); animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
         .seismic-icon:hover { transform: scale(1.3) !important; z-index: 1000 !important; cursor: pointer; }
-        .intensity-1 { background-color: #6085c9; } .intensity-2 { background-color: #2679d6; } .intensity-3 { background-color: #2bba2b; } .intensity-4 { background-color: #f0cc00; color: #222; text-shadow: none; }
+
+        .intensity-1 { background-color: #6085c9; }
+        .intensity-2 { background-color: #2679d6; }
+        .intensity-3 { background-color: #2bba2b; }
+        .intensity-4 { background-color: #f0cc00; color: #222; text-shadow: none; }
         .intensity-5-minus { background-color: #ffaa00; color: #222; text-shadow: none; animation: popIn 0.5s forwards, pulse-yellow 2s infinite 1s; }
         .intensity-5-plus { background-color: #ff7300; animation: popIn 0.5s forwards, pulse-yellow 2s infinite 1s; }
         .intensity-6-minus { background-color: #e60000; animation: popIn 0.5s forwards, pulse-red 2s infinite 1s; }
         .intensity-6-plus { background-color: #a60021; animation: popIn 0.5s forwards, pulse-red 2s infinite 1s; }
         .intensity-7 { background-color: #9c005b; animation: popIn 0.5s forwards, pulse-red 2s infinite 1s; }
         .intensity-unknown { background-color: #666; }
-        .info-panel { position: absolute; top: 20px; left: 20px; z-index: 1000; padding: 20px; width: 320px; max-width: 90%; max-height: 85vh; overflow-y: auto; border-left: 6px solid var(--text-secondary); transition: border-color 0.3s ease; animation: slideInLeft 0.5s ease-out; }
+
+        /* ヘッダーボタン (左上に配置変更) */
+        .header-buttons {
+            position: absolute;
+            top: 20px;
+            left: 20px; /* 左へ */
+            z-index: 1100;
+            display: flex;
+            gap: 10px;
+        }
+
+        /* 左上情報パネル (PC) - ボタンの下に配置 */
+        .info-panel {
+            position: absolute;
+            top: 80px; /* ボタンと被らないように下げる */
+            left: 20px;
+            z-index: 1000;
+            padding: 20px; width: 320px; max-width: 90%; max-height: 75vh;
+            overflow-y: auto; border-left: 6px solid var(--text-secondary);
+            transition: border-color 0.3s ease; animation: slideInLeft 0.5s ease-out;
+        }
         .info-panel h1 { margin: 0 0 10px 0; font-size: 20px; font-weight: 700; letter-spacing: 0.05em; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--panel-border); padding-bottom: 10px; }
         .source-credit { font-size: 10px; color: var(--text-secondary); margin-bottom: 15px; line-height: 1.4; }
         .info-row { display: flex; justify-content: space-between; align-items: baseline; padding: 8px 0; border-bottom: 1px dashed rgba(255,255,255,0.1); }
@@ -52,6 +170,8 @@
         .info-value { font-weight: 700; text-align: right; font-size: 15px; }
         .info-value.updated { animation: flashText 0.6s ease-out; }
         .max-intensity { font-size: 1.6em; font-family: var(--font-mono); letter-spacing: -0.05em; }
+
+        /* 津波情報 */
         .tsunami-area-list { margin-top: 15px; border-top: 1px solid var(--panel-border); padding-top: 10px; }
         .tsunami-row { padding: 6px 0; border-bottom: 1px dashed rgba(255,255,255,0.1); font-size: 13px; display: flex; align-items: center; }
         .tsunami-grade { display: inline-block; padding: 2px 8px; border-radius: 4px; color: white; font-weight: bold; font-size: 10px; margin-right: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
@@ -59,23 +179,41 @@
         .grade-warning { background: linear-gradient(135deg, #f44336, #c62828); }
         .grade-watch { background: linear-gradient(135deg, #ffeb3b, #fbc02d); color: #222; }
         .grade-unknown { background: #666; }
-        #loading { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(18, 18, 18, 0.9); z-index: 2000; display: flex; justify-content: center; align-items: center; font-weight: bold; color: var(--text-primary); flex-direction: column; backdrop-filter: blur(5px); }
+
+        /* ロード画面 */
+        #loading {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(18, 18, 18, 0.9); z-index: 2000;
+            display: flex; justify-content: center; align-items: center; font-weight: bold; color: var(--text-primary);
+            flex-direction: column; backdrop-filter: blur(5px);
+        }
         .loading-spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.1); border-top-color: var(--accent-color); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
         @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* 凡例 */
         .legend { position: absolute; bottom: 30px; right: 20px; z-index: 1000; padding: 12px; width: 140px; }
         .legend-title { font-weight: bold; margin-bottom: 8px; text-align: center; font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
         .legend-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
         .legend-item { display: flex; align-items: center; justify-content: center; height: 30px; border-radius: 6px; font-weight: bold; font-size: 12px; font-family: var(--font-mono); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+
+        /* 更新ボタン */
         .refresh-btn { margin-top: 15px; width: 100%; background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.3)); border-color: rgba(59, 130, 246, 0.4); }
         .refresh-btn:hover { background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.4)); }
-        .header-buttons { position: absolute; top: 20px; right: 20px; z-index: 1100; display: flex; gap: 10px; }
-        .history-panel { position: absolute; top: 0; right: -340px; width: 320px; height: 100%; z-index: 1200; transition: right 0.4s cubic-bezier(0.19, 1, 0.22, 1); display: flex; flex-direction: column; border-radius: 12px 0 0 12px; border-right: none; }
+
+        /* 履歴パネル */
+        .history-panel {
+            position: absolute; top: 0; right: -340px; width: 320px; height: 100%; z-index: 1200;
+            transition: right 0.4s cubic-bezier(0.19, 1, 0.22, 1); display: flex; flex-direction: column;
+            border-radius: 12px 0 0 12px; border-right: none;
+        }
         .history-panel.open { right: 0; box-shadow: -10px 0 30px rgba(0,0,0,0.5); }
         .history-header { padding: 20px; border-bottom: 1px solid var(--panel-border); font-weight: bold; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); }
         .close-history-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary); transition: color 0.2s; }
         .close-history-btn:hover { color: var(--text-primary); }
         .history-list { flex: 1; overflow-y: auto; padding: 10px; }
-        .history-item { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; border-radius: 8px; transition: background 0.2s; margin-bottom: 8px; background: rgba(255,255,255,0.02); opacity: 0; transform: translateX(30px); animation: slideInRightItem 0.4s ease-out forwards; }
+        .history-item {
+            padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; border-radius: 8px; margin-bottom: 8px;
+            background: rgba(255,255,255,0.02); opacity: 0; transform: translateX(30px); animation: slideInRightItem 0.4s ease-out forwards;
+        }
         .history-item:hover { background: rgba(255,255,255,0.08); }
         .history-item.active { background: linear-gradient(90deg, rgba(59, 130, 246, 0.15), transparent); border-left: 3px solid var(--accent-color); }
         .history-time { font-size: 11px; color: var(--text-secondary); font-family: var(--font-mono); }
@@ -83,34 +221,57 @@
         .history-meta { font-size: 11px; display: flex; justify-content: space-between; align-items: center; margin-top: 6px; }
         .history-shindo-badge { padding: 3px 8px; border-radius: 4px; color: white; font-weight: bold; font-size: 10px; font-family: var(--font-mono); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
         .tsunami-badge { background-color: #1e3a8a; border: 1px solid #3b82f6; }
-        .modal-overlay { display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); z-index: 2000; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease; }
+
+        /* About Modal */
+        .modal-overlay {
+            display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); z-index: 2000;
+            justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
         .modal-overlay.open { opacity: 1; visibility: visible; }
-        .modal-content { padding: 30px; max-width: 500px; width: 90%; position: relative; opacity: 0; transform: scale(0.9) translateY(20px); filter: blur(10px); transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.4s ease; }
+        .modal-content {
+            padding: 30px; max-width: 500px; width: 90%; position: relative;
+            opacity: 0; transform: scale(0.9) translateY(20px); filter: blur(10px);
+            transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.4s ease;
+        }
         .modal-overlay.open .modal-content { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
-        .close-modal-btn { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: var(--text-secondary); transition: color 0.2s; }
-        .close-modal-btn:hover { color: var(--text-primary); }
+        .close-modal-btn { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: var(--text-secondary); }
         .modal-content h2 { margin-top: 0; color: var(--text-primary); border-bottom: 1px solid var(--panel-border); padding-bottom: 15px; font-size: 1.5em; }
         .modal-content p { line-height: 1.7; color: #d1d5db; font-size: 0.95em; }
         .modal-content ul { background: rgba(255,255,255,0.03); padding: 15px 15px 15px 35px; border-radius: 8px; color: #d1d5db; }
-        .creator-credit { margin-top: 25px; padding-top: 15px; border-top: 1px dashed var(--panel-border); text-align: right; font-weight: bold; color: var(--text-secondary); font-family: var(--font-mono); letter-spacing: 1px; font-size: 0.9em; }
+        .creator-credit { margin-top: 25px; padding-top: 15px; border-top: 1px dashed var(--panel-border); text-align: right; font-weight: bold; color: var(--text-secondary); font-family: var(--font-mono); font-size: 0.9em; }
 
+        /* Mobile */
         @media (max-width: 600px) {
-            .info-panel { width: calc(100% - 20px); left: 10px; right: auto; top: auto; bottom: 20px; max-height: 40vh; padding: 12px; background: rgba(20, 25, 35, 0.98); border-radius: 16px; box-sizing: border-box; }
+            .info-panel {
+                width: calc(100% - 20px); left: 10px; right: auto; top: auto; bottom: 20px;
+                max-height: 40vh; padding: 12px; background: rgba(20, 25, 35, 0.98); border-radius: 16px; box-sizing: border-box;
+            }
             .info-panel h1 { font-size: 16px; margin-bottom: 8px; padding-bottom: 8px; }
             .info-label { font-size: 11px; }
             .info-value { font-size: 14px; }
             .max-intensity { font-size: 1.5em; }
             .info-row { padding: 4px 0; }
             .refresh-btn { margin-top: 10px; padding: 10px; font-size: 12px; }
-            .header-buttons { top: 15px; right: 15px; gap: 8px; }
+
+            .header-buttons { top: 15px; left: 15px; gap: 8px; }
             .ui-btn { padding: 10px 14px; font-size: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); background: rgba(20, 25, 35, 0.95); }
+
             .history-panel { width: 100%; right: -100%; border-radius: 0; background: rgba(18, 18, 18, 0.98); }
             .history-header { padding: 15px; }
-            .legend { top: 15px; left: 15px; bottom: auto; right: auto; width: auto; padding: 6px; transform: scale(0.85); transform-origin: top left; background: rgba(20, 25, 35, 0.9); border-radius: 8px; }
+
+            .legend {
+                top: 15px; left: auto; right: 15px; bottom: auto; width: auto; padding: 6px;
+                transform: scale(0.85); transform-origin: top right; background: rgba(20, 25, 35, 0.9); border-radius: 8px;
+            }
             .legend-grid { gap: 3px; }
             .legend-item { width: 22px; height: 22px; font-size: 10px; }
+            
             .modal-content { width: 85%; padding: 20px; max-height: 80vh; overflow-y: auto; }
             .modal-content h2 { font-size: 1.3em; }
+            
+            /* Leaflet controls on mobile */
+            .leaflet-top.leaflet-right { top: 60px; right: 10px; } /* 凡例の下あたりに */
         }
     </style>
 </head>
@@ -148,16 +309,27 @@
     </div>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <script>
+        // --- Map Initialization with Controls on TOP-RIGHT ---
         const map = L.map('map', { zoomControl: false }).setView([36.5, 138.0], 5);
-        L.control.zoom({ position: 'bottomright' }).addTo(map);
-        L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png', { attribution: "<a href='https://maps.gsi.go.jp/development/ichiran.html' target='_blank' style='color:#aaa;'>国土地理院</a>", maxZoom: 18, minZoom: 4 }).addTo(map);
+        
+        // ズームとレイヤー切り替えを「右上」に配置
+        L.control.zoom({ position: 'topright' }).addTo(map);
+
+        const satelliteLayer = L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg', { attribution: "<a href='https://maps.gsi.go.jp/development/ichiran.html' target='_blank' style='color:#fff;'>国土地理院</a>", maxZoom: 18, minZoom: 4 });
+        const darkLayer = L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png', { attribution: "<a href='https://maps.gsi.go.jp/development/ichiran.html' target='_blank' style='color:#aaa;'>国土地理院</a>", maxZoom: 18, minZoom: 4 });
+        
+        map.addLayer(satelliteLayer); // Default
+
+        // レイヤー切り替えコントロールも「右上」に
+        const baseMaps = { "衛星写真": satelliteLayer, "標準地図(暗)": darkLayer };
+        L.control.layers(baseMaps, null, { position: 'topright' }).addTo(map);
+
         let markerLayer = L.layerGroup().addTo(map);
         let epicenterLayer = L.layerGroup().addTo(map);
 
         const locationMap = {
             "北海道": [43.06, 141.35], "青森県": [40.82, 140.74], "岩手県": [39.70, 141.15], "宮城県": [38.26, 140.87], "秋田県": [39.72, 140.10], "山形県": [38.25, 140.33], "福島県": [37.76, 140.47], "茨城県": [36.36, 140.47], "栃木県": [36.55, 139.88], "群馬県": [36.38, 139.06], "埼玉県": [35.86, 139.64], "千葉県": [35.60, 140.12], "東京都": [35.68, 139.76], "神奈川県": [35.44, 139.63], "新潟県": [37.91, 139.02], "富山県": [36.69, 137.21], "石川県": [36.56, 136.65], "福井県": [36.06, 136.22], "山梨県": [35.66, 138.56], "長野県": [36.64, 138.18], "岐阜県": [35.42, 136.75], "静岡県": [34.97, 138.38], "愛知県": [35.18, 136.90], "三重県": [34.71, 136.50], "滋賀県": [35.01, 135.85], "京都府": [35.01, 135.76], "大阪府": [34.69, 135.50], "兵庫県": [34.69, 135.19], "奈良県": [34.68, 135.80], "和歌山県": [34.23, 135.17], "鳥取県": [35.50, 134.23], "島根県": [35.46, 133.04], "岡山県": [34.65, 133.91], "広島県": [34.38, 132.45], "山口県": [34.17, 131.47], "徳島県": [34.07, 134.55], "香川県": [34.34, 134.04], "愛媛県": [33.83, 132.76], "高知県": [33.55, 133.53], "福岡県": [33.60, 130.41], "佐賀県": [33.26, 130.30], "長崎県": [32.75, 129.87], "熊本県": [32.80, 130.70], "大分県": [33.23, 131.60], "宮崎県": [31.90, 131.42], "鹿児島県": [31.59, 130.55], "沖縄県": [26.21, 127.68],
             "札幌市": [43.06, 141.35], "函館市": [41.76, 140.73], "小樽市": [43.19, 141.00], "旭川市": [43.77, 142.36], "室蘭市": [42.31, 140.97], "釧路市": [42.98, 144.38], "帯広市": [42.92, 143.19], "北見市": [43.80, 143.89], "夕張市": [43.05, 141.97], "岩見沢市": [43.20, 141.77], "網走市": [44.02, 144.26], "留萌市": [43.94, 141.65], "苫小牧市": [42.63, 141.60], "稚内市": [45.41, 141.67], "江別市": [43.10, 141.53], "根室市": [43.33, 145.58], "千歳市": [42.82, 141.65], "登別市": [42.41, 141.10], "恵庭市": [42.88, 141.58], "北広島市": [42.98, 141.56], "石狩市": [43.16, 141.30], "北斗市": [41.82, 140.65], "当別町": [43.22, 141.51], "新篠津村": [43.22, 141.65], "福島町": [41.48, 140.25], "七飯町": [41.89, 140.69], "八雲町": [42.25, 140.27], "長万部町": [42.51, 140.37], "奥尻町": [42.17, 139.51], "倶知安町": [42.90, 140.75], "余市町": [43.18, 140.79], "栗山町": [43.06, 141.77], "新十津川町": [43.56, 141.88], "東神楽町": [43.68, 142.45], "当麻町": [43.83, 142.52], "美瑛町": [43.59, 142.46], "上富良野町": [43.46, 142.46], "中富良野町": [43.40, 142.42], "南富良野町": [43.16, 142.56], "占冠村": [42.99, 142.40], "幌加内町": [44.01, 142.15], "羽幌町": [44.36, 141.70], "礼文町": [45.30, 141.04], "利尻町": [45.18, 141.22], "利尻富士町": [45.24, 141.21], "美幌町": [43.83, 144.11], "斜里町": [43.91, 144.66], "清里町": [43.84, 144.59], "小清水町": [43.85, 144.46], "遠軽町": [44.06, 143.52], "湧別町": [44.17, 143.61], "大空町": [43.91, 144.16], "音更町": [42.96, 143.20], "士幌町": [43.18, 143.26], "上士幌町": [43.23, 143.29], "鹿追町": [43.10, 142.99], "新得町": [43.08, 142.83], "清水町": [43.01, 142.88], "芽室町": [42.91, 143.05], "中札内村": [42.70, 143.13], "更別村": [42.65, 143.19], "大樹町": [42.50, 143.28], "広尾町": [42.29, 143.31], "幕別町": [42.91, 143.36], "池田町": [42.93, 143.45], "豊頃町": [42.79, 143.51], "本別町": [43.12, 143.61], "足寄町": [43.24, 143.55], "陸別町": [43.47, 143.74], "浦幌町": [42.81, 143.65], "釧路町": [43.01, 144.46], "厚岸町": [43.05, 144.85], "浜中町": [43.14, 145.12], "標茶町": [43.30, 144.60], "弟子屈町": [43.48, 144.46], "鶴居村": [43.23, 144.32], "白糠町": [42.96, 144.07], "別海町": [43.39, 145.12], "中標津町": [43.55, 144.97], "標津町": [43.66, 145.13], "羅臼町": [44.02, 145.19], "日高町": [42.48, 142.07], "平取町": [42.63, 142.14], "新冠町": [42.36, 142.32], "浦河町": [42.17, 142.77], "様似町": [42.13, 142.93], "えりも町": [42.02, 143.15], "新ひだか町": [42.34, 142.37],
-            // 北海道 (町村追加)
             "赤平市": [43.55, 142.04], "三笠市": [43.24, 141.87], "砂川市": [43.49, 141.90], "歌志内市": [43.52, 141.93], "深川市": [43.72, 142.04],
             "南幌町": [43.06, 141.65], "奈井江町": [43.42, 141.89], "上砂川町": [43.48, 141.98], "由仁町": [43.01, 141.79], "長沼町": [43.01, 141.69],
             "月形町": [43.34, 141.67], "浦臼町": [43.43, 141.81], "妹背牛町": [43.69, 141.97], "秩父別町": [43.76, 141.95], "雨竜町": [43.63, 141.89],
@@ -417,9 +589,8 @@
                         lat += (Math.random() - 0.5) * jitter; lng += (Math.random() - 0.5) * jitter;
                         const pInfo = parseIntensity(point.scale);
                         const delay = Math.min(delayIndex * 0.02, 1.5); delayIndex++;
-                        const zIndex = point.scale ? point.scale * 100 : 0;
                         const icon = L.divIcon({ className: 'custom-div-icon', html: `<div class="seismic-icon ${pInfo.className}" style="animation-delay:${delay}s">${pInfo.label}</div>`, iconSize: [24, 24], iconAnchor: [12, 12] });
-                        L.marker([lat, lng], { icon: icon, zIndexOffset: zIndex }).addTo(markerLayer).bindPopup(`<strong>${point.pref}${point.addr}</strong><br>震度${pInfo.label}`);
+                        L.marker([lat, lng], { icon: icon }).addTo(markerLayer).bindPopup(`<strong>${point.pref}${point.addr}</strong><br>震度${pInfo.label}`);
                     }
                 });
             }
