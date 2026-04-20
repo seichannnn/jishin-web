@@ -43,6 +43,11 @@
             background-color: var(--bg-dark);
             color: var(--text-primary);
             overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        *, *:before, *:after {
+            box-sizing: inherit;
         }
 
         #map {
@@ -146,21 +151,26 @@
         .header-buttons {
             position: absolute;
             top: 20px;
-            left: 20px; /* 左へ */
+            left: 20px;
             z-index: 1100;
             display: flex;
             gap: 10px;
         }
 
-        /* 左上情報パネル (PC) - ボタンの下に配置 */
+        /* 左上情報パネル (PC) */
         .info-panel {
             position: absolute;
-            top: 80px; /* ボタンと被らないように下げる */
+            top: 80px; 
             left: 20px;
             z-index: 1000;
-            padding: 20px; width: 320px; max-width: 90%; max-height: 75vh;
-            overflow-y: auto; border-left: 6px solid var(--text-secondary);
-            transition: border-color 0.3s ease; animation: slideInLeft 0.5s ease-out;
+            padding: 20px; 
+            width: 320px; 
+            max-width: 90%; 
+            max-height: 75vh;
+            overflow-y: auto; 
+            border-left: 6px solid var(--text-secondary);
+            transition: border-color 0.3s ease; 
+            animation: slideInLeft 0.5s ease-out;
         }
         .info-panel h1 { margin: 0 0 10px 0; font-size: 20px; font-weight: 700; letter-spacing: 0.05em; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--panel-border); padding-bottom: 10px; }
         .source-credit { font-size: 10px; color: var(--text-secondary); margin-bottom: 15px; line-height: 1.4; }
@@ -180,7 +190,7 @@
         .grade-watch { background: linear-gradient(135deg, #ffeb3b, #fbc02d); color: #222; }
         .grade-unknown { background: #666; }
 
-        /* 追加: 津波ボタンのアニメーション */
+        /* 津波ボタンのアニメーション */
         .tsunami-btn-active {
             background-color: rgba(220, 38, 38, 0.9) !important;
             border-color: #ef4444 !important;
@@ -246,19 +256,13 @@
         .modal-content h2 { margin-top: 0; color: var(--text-primary); border-bottom: 1px solid var(--panel-border); padding-bottom: 15px; font-size: 1.5em; }
         .modal-content p { line-height: 1.7; color: #d1d5db; font-size: 0.95em; }
         .modal-content ul { background: rgba(255,255,255,0.03); padding: 15px 15px 15px 35px; border-radius: 8px; color: #d1d5db; }
-        .creator-credit { margin-top: 25px; padding-top: 15px; border-top: 1px dashed var(--panel-border); text-align: right; font-weight: bold; color: var(--text-secondary); font-family: var(--font-mono); font-size: 0.9em; }
-
-        /* Mobile */
-        @media (max-width: 600px) {
-            .info-panel {
-                width: calc(100% - 20px); left: 10px; right: auto; top: auto; bottom: 20px;
         .creator-credit { margin-top: 25px; padding-top: 15px; border-top: 1px dashed var(--panel-border); text-align: right; font-weight: bold; color: var(--text-secondary); font-family: var(--font-mono); letter-spacing: 1px; font-size: 0.9em; }
 
-        /* Mobile */
+        /* --- Mobile Responsive (完全修正版) --- */
         @media (max-width: 600px) {
-            /* 情報パネルを画面幅いっぱいにし、文字のはみ出しを防止 */
+            /* 情報パネルを画面下部に全幅に近い形で固定し、文字のはみ出しを防止 */
             .info-panel { 
-                width: auto !important; 
+                width: calc(100% - 20px) !important; 
                 left: 10px !important; 
                 right: 10px !important; 
                 top: auto !important; 
@@ -268,28 +272,33 @@
                 padding: 15px !important; 
                 background: rgba(20, 25, 35, 0.98) !important; 
                 border-radius: 12px !important; 
-                box-sizing: border-box !important; 
             }
+            
             .info-panel h1 { font-size: 16px; margin-bottom: 8px; padding-bottom: 8px; }
             .source-credit { font-size: 10px; margin-bottom: 10px; }
+            
+            /* 文字が重ならないようにflexboxで制御 */
+            .info-row { padding: 4px 0; display: flex; flex-wrap: nowrap; justify-content: space-between; align-items: baseline; }
             .info-label { font-size: 11px; flex-shrink: 0; margin-right: 10px; }
             .info-value { font-size: 13px; word-break: break-word; text-align: right; }
             .max-intensity { font-size: 1.5em; }
-            .info-row { padding: 5px 0; flex-wrap: wrap; justify-content: space-between; }
+            
             .refresh-btn { margin-top: 10px; padding: 10px; font-size: 12px; }
 
+            /* 左上のボタン群 */
             .header-buttons { top: 10px; left: 10px; right: auto; gap: 8px; flex-wrap: wrap; max-width: 80%; }
             .ui-btn { padding: 8px 12px; font-size: 11px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); background: rgba(20, 25, 35, 0.95); }
 
+            /* 履歴メニュー */
             .history-panel { width: 100%; right: -100%; border-radius: 0; background: rgba(18, 18, 18, 0.98); }
             .history-header { padding: 15px; }
 
-            /* 凡例を情報パネルの上に配置して重なりを回避 */
+            /* 凡例を情報パネルのすぐ上に配置して重なりを回避 */
             .legend { 
                 top: auto !important; 
                 left: auto !important; 
                 right: 10px !important; 
-                bottom: calc(40vh + 30px) !important; 
+                bottom: calc(40vh + 35px) !important; /* info-panelの上に来るように計算 */
                 width: auto !important; 
                 padding: 8px !important; 
                 transform: scale(0.85) !important; 
@@ -303,7 +312,7 @@
             .modal-content { width: 90%; padding: 20px; max-height: 80vh; overflow-y: auto; }
             .modal-content h2 { font-size: 1.3em; }
             
-            /* Leaflet controls on mobile */
+            /* Leafletのレイヤー切り替えボタン (右上) */
             .leaflet-top.leaflet-right { top: 10px; right: 10px; } 
         }
     </style>
@@ -316,22 +325,32 @@
         <button class="ui-btn" onclick="toggleAbout()">ABOUT</button>
         <button class="ui-btn" onclick="toggleHistory()">履歴</button>
     </div>
+    
+    <!-- About Modal -->
     <div id="aboutModal" class="modal-overlay" onclick="toggleAbout()">
         <div class="modal-content glass-panel" onclick="event.stopPropagation()">
             <span class="close-modal-btn" onclick="toggleAbout()">×</span>
             <h2>About This Map</h2>
             <p>気象庁のデータを元にした最新の地震・津波情報を、地図上でリアルタイムに確認できるWebアプリです。</p>
-            <p><strong>機能・特徴：</strong></p><ul><li>最新の地震情報（震度分布）の可視化</li><li>津波予報の表示</li><li>過去の地震履歴の閲覧</li><li>SF風ダークグラスモーフィズムデザイン</li></ul>
+            <p><strong>機能・特徴：</strong></p>
+            <ul>
+                <li>最新の地震情報（震度分布）の可視化</li>
+                <li>津波予報の表示</li>
+                <li>過去の地震履歴の閲覧</li>
+                <li>SF風ダークグラスモーフィズムデザイン</li>
+            </ul>
             <p style="font-size:0.85em; color:var(--text-secondary);">※ データ出典：気象庁、防災科学技術研究所 (via P2PQuake API)<br>※ 実際の避難行動は公式情報に従ってください。</p>
             <div class="creator-credit">Created by seichan</div>
         </div>
     </div>
+    
+    <!-- 履歴パネル -->
     <div class="history-panel glass-panel" id="historyPanel">
         <div class="history-header">履歴一覧 <button class="close-history-btn" onclick="toggleHistory()">×</button></div>
         <div class="history-list" id="historyList"></div>
     </div>
 
-    <!-- 追加: 津波詳細モーダル -->
+    <!-- 津波詳細モーダル -->
     <div id="tsunamiModal" class="modal-overlay" onclick="toggleTsunamiModal()">
         <div class="modal-content glass-panel" onclick="event.stopPropagation()">
             <span class="close-modal-btn" onclick="toggleTsunamiModal()">×</span>
@@ -348,12 +367,15 @@
         </div>
     </div>
 
+    <!-- 左下(PC左上)情報パネル -->
     <div class="info-panel glass-panel" id="infoPanel">
         <h1>EARTHQUAKE</h1>
         <div class="source-credit">DATA: JMA, NIED via P2PQuake API</div>
         <div class="info-details" id="infoContent"><div style="padding: 20px; text-align: center; color: var(--text-secondary);">Waiting for data...</div></div>
         <button class="ui-btn refresh-btn" onclick="fetchLatestQuake()">最新情報に更新</button>
     </div>
+    
+    <!-- 凡例 -->
     <div class="legend glass-panel">
         <div class="legend-title">JMA SEISMIC SCALE</div>
         <div class="legend-grid">
@@ -362,6 +384,7 @@
             <div class="legend-item intensity-6-minus">6-</div><div class="legend-item intensity-6-plus">6+</div><div class="legend-item intensity-7">7</div>
         </div>
     </div>
+
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <script>
         // --- Map Initialization with Controls on TOP-RIGHT ---
