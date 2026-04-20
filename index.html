@@ -147,7 +147,7 @@
         .intensity-7 { background-color: #9c005b; animation: popIn 0.5s forwards, pulse-red 2s infinite 1s; }
         .intensity-unknown { background-color: #666; }
 
-        /* ヘッダーボタン (左上に配置変更) */
+        /* ヘッダーボタン */
         .header-buttons {
             position: absolute;
             top: 20px;
@@ -155,6 +155,7 @@
             z-index: 1100;
             display: flex;
             gap: 10px;
+            flex-wrap: wrap;
         }
 
         /* 左上情報パネル (PC) */
@@ -226,6 +227,31 @@
         .history-header { padding: 20px; border-bottom: 1px solid var(--panel-border); font-weight: bold; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); }
         .close-history-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-secondary); transition: color 0.2s; }
         .close-history-btn:hover { color: var(--text-primary); }
+        
+        /* --- フィルターUI --- */
+        .history-filters {
+            padding: 12px;
+            border-bottom: 1px solid var(--panel-border);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+        .history-filters select, .history-filters input {
+            flex: 1;
+            min-width: 45%;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: #fff;
+            padding: 8px 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: inherit;
+        }
+        .history-filters input { min-width: 100%; }
+        .history-filters select option { background: var(--bg-dark); color: white; }
+        .history-filters input:focus, .history-filters select:focus { outline: none; border-color: var(--accent-color); }
+
         .history-list { flex: 1; overflow-y: auto; padding: 10px; }
         .history-item {
             padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; border-radius: 8px; margin-bottom: 8px;
@@ -252,7 +278,8 @@
             transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.4s ease;
         }
         .modal-overlay.open .modal-content { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
-        .close-modal-btn { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: var(--text-secondary); }
+        .close-modal-btn { position: absolute; top: 15px; right: 20px; font-size: 28px; cursor: pointer; color: var(--text-secondary); transition: color 0.2s; }
+        .close-modal-btn:hover { color: var(--text-primary); }
         .modal-content h2 { margin-top: 0; color: var(--text-primary); border-bottom: 1px solid var(--panel-border); padding-bottom: 15px; font-size: 1.5em; }
         .modal-content p { line-height: 1.7; color: #d1d5db; font-size: 0.95em; }
         .modal-content ul { background: rgba(255,255,255,0.03); padding: 15px 15px 15px 35px; border-radius: 8px; color: #d1d5db; }
@@ -272,6 +299,7 @@
                 padding: 15px !important; 
                 background: rgba(20, 25, 35, 0.98) !important; 
                 border-radius: 12px !important; 
+                box-sizing: border-box !important; 
             }
             
             .info-panel h1 { font-size: 16px; margin-bottom: 8px; padding-bottom: 8px; }
@@ -321,6 +349,7 @@
     <div id="loading"><div class="loading-spinner"></div><div>Loading Data...</div></div>
     <div id="map"></div>
     <div class="header-buttons">
+        <button class="ui-btn" id="notifyBtn" onclick="toggleNotification()" style="display: none;">🔔 通知OFF</button>
         <button id="tsunamiBtn" class="ui-btn tsunami-btn-active" onclick="toggleTsunamiModal()" style="display: none;">🌊 津波詳細</button>
         <button class="ui-btn" onclick="toggleAbout()">ABOUT</button>
         <button class="ui-btn" onclick="toggleHistory()">履歴</button>
@@ -336,8 +365,8 @@
             <ul>
                 <li>最新の地震情報（震度分布）の可視化</li>
                 <li>津波予報の表示</li>
-                <li>過去の地震履歴の閲覧</li>
-                <li>SF風ダークグラスモーフィズムデザイン</li>
+                <li>過去の地震履歴の閲覧・フィルタリング</li>
+                <li>新着地震のプッシュ通知機能</li>
             </ul>
             <p style="font-size:0.85em; color:var(--text-secondary);">※ データ出典：気象庁、防災科学技術研究所 (via P2PQuake API)<br>※ 実際の避難行動は公式情報に従ってください。</p>
             <div class="creator-credit">Created by seichan</div>
@@ -347,6 +376,25 @@
     <!-- 履歴パネル -->
     <div class="history-panel glass-panel" id="historyPanel">
         <div class="history-header">履歴一覧 <button class="close-history-btn" onclick="toggleHistory()">×</button></div>
+        
+        <!-- 追加: フィルターUI -->
+        <div class="history-filters">
+            <select id="filterScale" onchange="onFilterChange()">
+                <option value="0">すべての震度</option>
+                <option value="10">震度1以上</option>
+                <option value="30">震度3以上</option>
+                <option value="40">震度4以上</option>
+                <option value="50">震度5弱以上</option>
+            </select>
+            <select id="filterMag" onchange="onFilterChange()">
+                <option value="0">すべての規模</option>
+                <option value="4">M4.0以上</option>
+                <option value="5">M5.0以上</option>
+                <option value="6">M6.0以上</option>
+            </select>
+            <input type="text" id="filterName" placeholder="震源地で検索 (例: 千葉)" oninput="onFilterChange()">
+        </div>
+
         <div class="history-list" id="historyList"></div>
     </div>
 
@@ -387,23 +435,62 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <script>
-        // --- Map Initialization with Controls on TOP-RIGHT ---
+        // --- Map Initialization ---
         const map = L.map('map', { zoomControl: false }).setView([36.5, 138.0], 5);
-        
-        // ズームとレイヤー切り替えを「右上」に配置
         L.control.zoom({ position: 'topright' }).addTo(map);
-
         const satelliteLayer = L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg', { attribution: "<a href='https://maps.gsi.go.jp/development/ichiran.html' target='_blank' style='color:#fff;'>国土地理院</a>", maxZoom: 18, minZoom: 4 });
         const darkLayer = L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png', { attribution: "<a href='https://maps.gsi.go.jp/development/ichiran.html' target='_blank' style='color:#aaa;'>国土地理院</a>", maxZoom: 18, minZoom: 4 });
         
         map.addLayer(satelliteLayer); // Default
-
-        // レイヤー切り替えコントロールも「右上」に
         const baseMaps = { "衛星写真": satelliteLayer, "標準地図(暗)": darkLayer };
         L.control.layers(baseMaps, null, { position: 'topright' }).addTo(map);
 
         let markerLayer = L.layerGroup().addTo(map);
         let epicenterLayer = L.layerGroup().addTo(map);
+
+        // --- Notification Setup ---
+        let isNotificationEnabled = false;
+
+        function initNotificationUI() {
+            const btn = document.getElementById('notifyBtn');
+            btn.style.display = 'block'; // APIが使える環境なら表示
+            if (Notification.permission === 'granted') {
+                isNotificationEnabled = true;
+                btn.innerHTML = '🔕 通知ON';
+                btn.style.background = 'rgba(59, 130, 246, 0.4)';
+                btn.style.borderColor = 'rgba(59, 130, 246, 0.8)';
+            } else {
+                isNotificationEnabled = false;
+                btn.innerHTML = '🔔 通知OFF';
+                btn.style.background = '';
+                btn.style.borderColor = '';
+            }
+        }
+
+        function toggleNotification() {
+            if (!("Notification" in window)) {
+                alert("このブラウザは通知をサポートしていません。");
+                return;
+            }
+            if (Notification.permission === "granted") {
+                alert("通知設定はブラウザのサイト設定からブロックに変更してください。");
+            } else if (Notification.permission !== "denied") {
+                Notification.requestPermission().then(permission => {
+                    initNotificationUI();
+                    if (permission === "granted") {
+                        new Notification("通知が有効になりました", { body: "新しい地震・津波情報をここでお知らせします。" });
+                    }
+                });
+            } else {
+                alert("ブラウザの設定で通知がブロックされています。解除してください。");
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if ("Notification" in window) {
+                initNotificationUI();
+            }
+        });
 
         const locationMap = {
             "北海道": [43.06, 141.35], "青森県": [40.82, 140.74], "岩手県": [39.70, 141.15], "宮城県": [38.26, 140.87], "秋田県": [39.72, 140.10], "山形県": [38.25, 140.33], "福島県": [37.76, 140.47], "茨城県": [36.36, 140.47], "栃木県": [36.55, 139.88], "群馬県": [36.38, 139.06], "埼玉県": [35.86, 139.64], "千葉県": [35.60, 140.12], "東京都": [35.68, 139.76], "神奈川県": [35.44, 139.63], "新潟県": [37.91, 139.02], "富山県": [36.69, 137.21], "石川県": [36.56, 136.65], "福井県": [36.06, 136.22], "山梨県": [35.66, 138.56], "長野県": [36.64, 138.18], "岐阜県": [35.42, 136.75], "静岡県": [34.97, 138.38], "愛知県": [35.18, 136.90], "三重県": [34.71, 136.50], "滋賀県": [35.01, 135.85], "京都府": [35.01, 135.76], "大阪府": [34.69, 135.50], "兵庫県": [34.69, 135.19], "奈良県": [34.68, 135.80], "和歌山県": [34.23, 135.17], "鳥取県": [35.50, 134.23], "島根県": [35.46, 133.04], "岡山県": [34.65, 133.91], "広島県": [34.38, 132.45], "山口県": [34.17, 131.47], "徳島県": [34.07, 134.55], "香川県": [34.34, 134.04], "愛媛県": [33.83, 132.76], "高知県": [33.55, 133.53], "福岡県": [33.60, 130.41], "佐賀県": [33.26, 130.30], "長崎県": [32.75, 129.87], "熊本県": [32.80, 130.70], "大分県": [33.23, 131.60], "宮崎県": [31.90, 131.42], "鹿児島県": [31.59, 130.55], "沖縄県": [26.21, 127.68],
@@ -502,23 +589,20 @@
         function formatDate(dateStr) {
             if (!dateStr) return "日時不明";
             const match = dateStr.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})\s+(\d{1,2}):(\d{1,2})/);
-            // スマホでの文字のはみ出しを防ぐため、少しスッキリしたフォーマットに変更
             return match ? `${match[1]}/${match[2]}/${match[3]} ${match[4]}:${match[5]}頃` : dateStr;
         }
 
         let historyDataList = [], currentLatestId = null;
-        let currentViewData = null; // 現在表示中のデータを保持
-        let activeTsunami = null; // 現在有効な津波情報を保持
-        let jmaTsunamiData = null; // 追加: 気象庁の公式津波データ
+        let currentViewData = null; 
+        let activeTsunami = null; 
+        let jmaTsunamiData = null; 
 
-        // 追加: 気象庁の公式津波データを取得する関数
+        // 気象庁の公式津波データを取得する関数
         async function fetchJmaTsunamiData() {
             try {
-                // 気象庁の津波リストJSONを取得
                 const listRes = await fetch('https://www.jma.go.jp/bosai/tsunami/data/list.json', { cache: 'no-store' });
                 const list = await listRes.json();
                 if (list && list.length > 0) {
-                    // 一番最新の津波詳細JSONを取得
                     const detailRes = await fetch(`https://www.jma.go.jp/bosai/tsunami/data/${list[0].json}`, { cache: 'no-store' });
                     jmaTsunamiData = await detailRes.json();
                 }
@@ -527,7 +611,7 @@
             }
         }
 
-        // 追加: 気象庁データから特定のエリアの予想高さを抽出する関数
+        // 気象庁データから特定のエリアの予想高さを抽出する関数
         function getJmaTsunamiHeight(areaName) {
             try {
                 if (!jmaTsunamiData || !jmaTsunamiData.body || !jmaTsunamiData.body.Tsunami || !jmaTsunamiData.body.Tsunami.Forecast || !jmaTsunamiData.body.Tsunami.Forecast.Item) return null;
@@ -535,19 +619,15 @@
                 let items = jmaTsunamiData.body.Tsunami.Forecast.Item;
                 if (!Array.isArray(items)) items = [items];
                 
-                // エリア名が一致するデータを探す
                 const target = items.find(item => item.Area && item.Area.Name === areaName);
                 if (target && target.MaxHeight && target.MaxHeight.TsunamiHeight) {
                     const h = target.MaxHeight.TsunamiHeight;
-                    // データ形式の違いに対応（1m、3mなどの文字列を取り出す）
                     if (typeof h === 'string') return h;
                     if (typeof h === 'object' && h['#text']) return h['#text'];
                     if (typeof h === 'object' && h.description) return h.description;
-                    if (typeof h === 'object' && h.Condition) return h.Condition; // 「観測中」などの場合
+                    if (typeof h === 'object' && h.Condition) return h.Condition; 
                 }
-            } catch(e) {
-                console.error('高さ取得エラー:', e);
-            }
+            } catch(e) {}
             return null;
         }
 
@@ -597,12 +677,10 @@
                 const newHistoryDataList = Array.from(quakeMap.values());
                 newHistoryDataList.sort((a, b) => b.time.localeCompare(a.time));
 
-                // 最新の津波情報が「有効（解除されていない）」かチェックし、ボタンを常に表示・非表示する
                 const latestTsunami = newHistoryDataList.find(q => q.code === 552);
                 if (latestTsunami && !latestTsunami.cancelled) {
                     activeTsunami = latestTsunami;
                     document.getElementById('tsunamiBtn').style.display = 'block';
-                    // 気象庁の公式データを裏で取得
                     await fetchJmaTsunamiData();
                 } else {
                     activeTsunami = null;
@@ -615,15 +693,35 @@
                     const latestId = latestQuake.id || latestQuake.time; 
 
                     if (isAutoUpdate) {
-                        // 新しい情報があった場合のみ更新する
                         if (latestId !== currentLatestId) {
                             historyDataList = newHistoryDataList;
+                            
+                            // --- 通知の発火 ---
+                            if (currentLatestId !== null && isNotificationEnabled) {
+                                let title = "新しい情報";
+                                let body = "";
+                                if (latestQuake.code === 552) {
+                                    title = "🌊 津波情報が発表されました";
+                                    body = "詳細を確認してください。";
+                                } else {
+                                    const eq = latestQuake.earthquake || {};
+                                    const hypo = eq.hypocenter || latestQuake.hypocenter || {};
+                                    let scale = latestQuake.maxScale !== undefined ? latestQuake.maxScale : eq.maxScale;
+                                    const maxInt = parseIntensity(scale);
+                                    title = `【最大震度${maxInt.label}】${hypo.name || '震源地不明'}`;
+                                    body = `マグニチュード: ${hypo.magnitude !== -1 && hypo.magnitude ? hypo.magnitude.toFixed(1) : '-'} / 深さ: ${hypo.depth !== -1 && hypo.depth ? hypo.depth + 'km' : '-'}`;
+                                }
+                                new Notification(title, { 
+                                    body: body,
+                                    icon: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌊</text></svg>'
+                                });
+                            }
+
                             currentLatestId = latestId;
                             renderHistoryList();
                             updateUI(latestQuake);
                         }
                     } else {
-                        // 初回や「最新情報に更新」ボタンを押した時は強制更新
                         historyDataList = newHistoryDataList;
                         currentLatestId = latestId;
                         renderHistoryList();
@@ -640,6 +738,14 @@
         function toggleHistory() { document.getElementById('historyPanel').classList.toggle('open'); }
         function toggleAbout() { document.getElementById('aboutModal').classList.toggle('open'); }
         
+        function onFilterChange() {
+            renderHistoryList();
+            if (currentViewData) {
+                // フィルターが変更されたら、地図上の表示も更新する
+                updateUI(currentViewData);
+            }
+        }
+
         function toggleTsunamiModal() { 
             const modal = document.getElementById('tsunamiModal');
             if (!modal.classList.contains('open')) {
@@ -650,8 +756,6 @@
                         html += '<ul style="list-style: none; padding: 0; margin: 0;">';
                         activeTsunami.areas.forEach(area => {
                             const gradeInfo = getTsunamiGradeInfo(area.grade);
-                            
-                            // ★ 気象庁データから具体的な高さを取得できたら上書きする
                             const jmaHeight = getJmaTsunamiHeight(area.name);
                             let displayHeight = gradeInfo.height;
                             if (jmaHeight) {
@@ -679,11 +783,48 @@
         }
 
         function renderHistoryList() {
-            const listEl = document.getElementById('historyList'); listEl.innerHTML = '';
-            historyDataList.forEach((quake, index) => {
+            const listEl = document.getElementById('historyList'); 
+            listEl.innerHTML = '';
+            
+            // --- フィルター機能 ---
+            const filterScaleVal = parseInt(document.getElementById('filterScale').value) || 0;
+            const filterMagVal = parseFloat(document.getElementById('filterMag').value) || 0;
+            const filterNameVal = document.getElementById('filterName').value.trim();
+
+            const filteredList = historyDataList.filter(quake => {
+                // 津波情報は常に表示
+                if (quake.code === 552) return true; 
+                
+                const eq = quake.earthquake || {};
+                const hypo = eq.hypocenter || quake.hypocenter || {};
+                
+                let scaleValue = quake.maxScale !== undefined ? quake.maxScale : eq.maxScale;
+                if (scaleValue === undefined || scaleValue === null) scaleValue = -1;
+                
+                let magValue = (typeof hypo.magnitude === 'number' && hypo.magnitude !== -1) ? hypo.magnitude : -1;
+                let nameValue = hypo.name || "";
+
+                if (filterScaleVal > 0 && scaleValue < filterScaleVal) return false;
+                if (filterMagVal > 0 && magValue < filterMagVal) return false;
+                if (filterNameVal !== "" && !nameValue.includes(filterNameVal)) return false;
+
+                return true;
+            });
+
+            if (filteredList.length === 0) {
+                listEl.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-secondary);">条件に合う履歴がありません</div>';
+                return;
+            }
+
+            filteredList.forEach((quake, index) => {
                 const div = document.createElement('div'); div.className = 'history-item';
                 div.style.animationDelay = `${index * 0.05}s`;
-                if (index === 0) div.classList.add('active');
+                
+                // 現在表示中のデータがあればそれをアクティブに、なければ最初の要素をアクティブに
+                const isActive = currentViewData && (quake.id === currentViewData.id || quake.time === currentViewData.time);
+                if (isActive || (!currentViewData && index === 0)) {
+                    div.classList.add('active');
+                }
                 
                 div.onclick = () => {
                     updateUI(quake);
@@ -718,7 +859,7 @@
             const infoPanel = document.getElementById('infoPanel'), infoContent = document.getElementById('infoContent');
             if (!data) return;
 
-            currentViewData = data; // 現在のデータを保存
+            currentViewData = data; 
 
             if (data.code === 552) {
                 infoPanel.style.borderLeftColor = '#1e3a8a';
@@ -763,11 +904,17 @@
                 map.setView([hypo.latitude, hypo.longitude], 6);
             }
 
+            // 地図上の震度アイコン用フィルター値を取得
+            const filterScaleVal = parseInt(document.getElementById('filterScale').value) || 0;
+
             if (data.points && Array.isArray(data.points)) {
                 data.points.sort((a, b) => b.scale - a.scale);
                 const usedAddr = new Set();
                 let delayIndex = 0;
                 data.points.forEach(point => {
+                    // フィルター条件: 選択した震度未満の場合は地図に表示しない
+                    if (filterScaleVal > 0 && point.scale < filterScaleVal) return;
+
                     const uniqueKey = `${point.pref}_${point.addr}`;
                     if (usedAddr.has(uniqueKey)) return;
                     usedAddr.add(uniqueKey);
