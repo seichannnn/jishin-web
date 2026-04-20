@@ -254,31 +254,57 @@
                 width: calc(100% - 20px); left: 10px; right: auto; top: auto; bottom: 20px;
         .creator-credit { margin-top: 25px; padding-top: 15px; border-top: 1px dashed var(--panel-border); text-align: right; font-weight: bold; color: var(--text-secondary); font-family: var(--font-mono); letter-spacing: 1px; font-size: 0.9em; }
 
+        /* Mobile */
         @media (max-width: 600px) {
-            .info-panel { width: calc(100% - 20px); left: 10px; right: auto; top: auto; bottom: 20px; max-height: 35vh; padding: 12px; background: rgba(20, 25, 35, 0.98); border-radius: 12px; box-sizing: border-box; }
-            .info-panel h1 { font-size: 15px; margin-bottom: 6px; padding-bottom: 6px; }
-            .source-credit { font-size: 9px; margin-bottom: 8px; }
-            .info-label { font-size: 10px; white-space: nowrap; }
-            .info-value { font-size: 13px; word-break: break-word; }
-            .max-intensity { font-size: 1.3em; }
-            .info-row { padding: 4px 0; }
-            .refresh-btn { margin-top: 8px; padding: 8px; font-size: 11px; }
+            /* 情報パネルを画面幅いっぱいにし、文字のはみ出しを防止 */
+            .info-panel { 
+                width: auto !important; 
+                left: 10px !important; 
+                right: 10px !important; 
+                top: auto !important; 
+                bottom: 20px !important; 
+                max-width: none !important; 
+                max-height: 40vh !important; 
+                padding: 15px !important; 
+                background: rgba(20, 25, 35, 0.98) !important; 
+                border-radius: 12px !important; 
+                box-sizing: border-box !important; 
+            }
+            .info-panel h1 { font-size: 16px; margin-bottom: 8px; padding-bottom: 8px; }
+            .source-credit { font-size: 10px; margin-bottom: 10px; }
+            .info-label { font-size: 11px; flex-shrink: 0; margin-right: 10px; }
+            .info-value { font-size: 13px; word-break: break-word; text-align: right; }
+            .max-intensity { font-size: 1.5em; }
+            .info-row { padding: 5px 0; flex-wrap: wrap; justify-content: space-between; }
+            .refresh-btn { margin-top: 10px; padding: 10px; font-size: 12px; }
 
-            .header-buttons { top: 10px; left: 10px; gap: 8px; flex-wrap: wrap; }
+            .header-buttons { top: 10px; left: 10px; right: auto; gap: 8px; flex-wrap: wrap; max-width: 80%; }
             .ui-btn { padding: 8px 12px; font-size: 11px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); background: rgba(20, 25, 35, 0.95); }
 
             .history-panel { width: 100%; right: -100%; border-radius: 0; background: rgba(18, 18, 18, 0.98); }
             .history-header { padding: 15px; }
 
-            .legend { top: 10px; left: auto; right: 10px; bottom: auto; width: auto; padding: 6px; transform: scale(0.8); transform-origin: top right; background: rgba(20, 25, 35, 0.9); border-radius: 8px; }
+            /* 凡例を情報パネルの上に配置して重なりを回避 */
+            .legend { 
+                top: auto !important; 
+                left: auto !important; 
+                right: 10px !important; 
+                bottom: calc(40vh + 30px) !important; 
+                width: auto !important; 
+                padding: 8px !important; 
+                transform: scale(0.85) !important; 
+                transform-origin: bottom right !important; 
+                background: rgba(20, 25, 35, 0.9) !important; 
+                border-radius: 8px !important; 
+            }
             .legend-grid { gap: 3px; }
             .legend-item { width: 22px; height: 22px; font-size: 10px; }
             
-            .modal-content { width: 85%; padding: 20px; max-height: 80vh; overflow-y: auto; }
-            .modal-content h2 { font-size: 1.2em; }
+            .modal-content { width: 90%; padding: 20px; max-height: 80vh; overflow-y: auto; }
+            .modal-content h2 { font-size: 1.3em; }
             
             /* Leaflet controls on mobile */
-            .leaflet-top.leaflet-right { top: 70px; right: 10px; } /* 凡例の下あたりに */
+            .leaflet-top.leaflet-right { top: 10px; right: 10px; } 
         }
     </style>
 </head>
@@ -453,12 +479,54 @@
         function formatDate(dateStr) {
             if (!dateStr) return "日時不明";
             const match = dateStr.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})\s+(\d{1,2}):(\d{1,2})/);
-            return match ? `${match[1]}年${match[2]}月${match[3]}日 ${match[4]}:${match[5]}頃` : dateStr;
+            // スマホでの文字のはみ出しを防ぐため、少しスッキリしたフォーマットに変更
+            return match ? `${match[1]}/${match[2]}/${match[3]} ${match[4]}:${match[5]}頃` : dateStr;
         }
 
         let historyDataList = [], currentLatestId = null;
         let currentViewData = null; // 現在表示中のデータを保持
         let activeTsunami = null; // 現在有効な津波情報を保持
+        let jmaTsunamiData = null; // 追加: 気象庁の公式津波データ
+
+        // 追加: 気象庁の公式津波データを取得する関数
+        async function fetchJmaTsunamiData() {
+            try {
+                // 気象庁の津波リストJSONを取得
+                const listRes = await fetch('https://www.jma.go.jp/bosai/tsunami/data/list.json', { cache: 'no-store' });
+                const list = await listRes.json();
+                if (list && list.length > 0) {
+                    // 一番最新の津波詳細JSONを取得
+                    const detailRes = await fetch(`https://www.jma.go.jp/bosai/tsunami/data/${list[0].json}`, { cache: 'no-store' });
+                    jmaTsunamiData = await detailRes.json();
+                }
+            } catch (e) {
+                console.error('気象庁津波データの取得に失敗', e);
+            }
+        }
+
+        // 追加: 気象庁データから特定のエリアの予想高さを抽出する関数
+        function getJmaTsunamiHeight(areaName) {
+            try {
+                if (!jmaTsunamiData || !jmaTsunamiData.body || !jmaTsunamiData.body.Tsunami || !jmaTsunamiData.body.Tsunami.Forecast || !jmaTsunamiData.body.Tsunami.Forecast.Item) return null;
+                
+                let items = jmaTsunamiData.body.Tsunami.Forecast.Item;
+                if (!Array.isArray(items)) items = [items];
+                
+                // エリア名が一致するデータを探す
+                const target = items.find(item => item.Area && item.Area.Name === areaName);
+                if (target && target.MaxHeight && target.MaxHeight.TsunamiHeight) {
+                    const h = target.MaxHeight.TsunamiHeight;
+                    // データ形式の違いに対応（1m、3mなどの文字列を取り出す）
+                    if (typeof h === 'string') return h;
+                    if (typeof h === 'object' && h['#text']) return h['#text'];
+                    if (typeof h === 'object' && h.description) return h.description;
+                    if (typeof h === 'object' && h.Condition) return h.Condition; // 「観測中」などの場合
+                }
+            } catch(e) {
+                console.error('高さ取得エラー:', e);
+            }
+            return null;
+        }
 
         // 警報レベルに応じた予想高さの取得
         function getTsunamiGradeInfo(grade) {
@@ -511,8 +579,11 @@
                 if (latestTsunami && !latestTsunami.cancelled) {
                     activeTsunami = latestTsunami;
                     document.getElementById('tsunamiBtn').style.display = 'block';
+                    // 気象庁の公式データを裏で取得
+                    await fetchJmaTsunamiData();
                 } else {
                     activeTsunami = null;
+                    jmaTsunamiData = null;
                     document.getElementById('tsunamiBtn').style.display = 'none';
                 }
 
@@ -557,12 +628,19 @@
                         activeTsunami.areas.forEach(area => {
                             const gradeInfo = getTsunamiGradeInfo(area.grade);
                             
+                            // ★ 気象庁データから具体的な高さを取得できたら上書きする
+                            const jmaHeight = getJmaTsunamiHeight(area.name);
+                            let displayHeight = gradeInfo.height;
+                            if (jmaHeight) {
+                                displayHeight = `🌊 予想される高さ: <span style="color:#ff4d4d; font-size:16px;">${jmaHeight}</span>`;
+                            }
+                            
                             html += `<li style="margin-bottom: 8px; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 8px; display: flex; flex-direction: column; justify-content: center;">
                                 <div style="display: flex; align-items: center; margin-bottom: 6px;">
                                     <span class="tsunami-grade ${gradeInfo.class}" style="font-size: 12px; padding: 6px 10px; min-width: 80px; text-align: center; margin-right: 12px;">${gradeInfo.label}</span>
                                     <span style="font-size: 16px; font-weight: bold; color: var(--text-primary);">${area.name}</span>
                                 </div>
-                                <div style="font-size: 13px; color: #ffcccc; margin-left: 102px; font-weight: 500;">${gradeInfo.height}</div>
+                                <div style="font-size: 13px; color: #ffcccc; margin-left: 102px; font-weight: 500;">${displayHeight}</div>
                             </li>`;
                         });
                         html += '</ul>';
